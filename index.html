@@ -4,3 +4,868 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WC Vote 2026</title>
+<style>
+:root{--blue:#1a73e8;--blue-l:#E6F1FB;--blue-d:#0C447C;--red:#D85A30;--red-l:#FAECE7;--red-d:#712B13;--green:#137333;--green-l:#e6f4ea;--orange:#E37400;--orange-l:#FEF3C7;--border:rgba(0,0,0,0.12);--bg:#f5f5f3;--card:#fff;--text:#1a1a18;--muted:#888;--r:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:#fff;border-radius:16px;border:1px solid var(--border);padding:32px 28px;width:100%;max-width:340px;text-align:center;}
+.login-logo{font-size:40px;margin-bottom:12px;}
+.login-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.login-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:15px;outline:none;margin-bottom:10px;letter-spacing:2px;text-align:center;}
+.login-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,115,232,.12);}
+.login-btn{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;}
+.login-err{color:#c0392b;font-size:12px;margin-top:6px;min-height:16px;}
+.site-header{background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.site-logo{font-size:15px;font-weight:600;}
+.site-logo span{color:var(--blue);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.role-badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
+.role-manager{background:#fef3c7;color:#92400e;}
+.role-member{background:var(--blue-l);color:var(--blue-d);}
+.logout-btn{font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:20px;cursor:pointer;}
+.tabs-bar{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 12px;overflow-x:auto;scrollbar-width:none;}
+.tabs-bar::-webkit-scrollbar{display:none;}
+.tab-main{padding:10px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-main.active{color:var(--blue);border-bottom-color:var(--blue);}
+.day-nav{background:#fff;border-bottom:1px solid var(--border);padding:10px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.day-nav::-webkit-scrollbar{display:none;}
+.day-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.day-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.day-btn.today{border-color:var(--blue);color:var(--blue);}
+.page{display:none;padding:14px 14px 60px;max-width:600px;margin:0 auto;}
+.page.active{display:block;}
+/* MATCH CARD */
+.match-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;position:relative;transition:opacity .2s;}
+.match-card.locked{opacity:.55;}
+.match-card.active-match{border-color:var(--blue);border-width:2px;}
+.match-card.voted-card{border-color:var(--green);border-width:2px;}
+.match-header{display:flex;align-items:center;padding:12px 14px;gap:10px;user-select:none;}
+.match-card:not(.locked) .match-header{cursor:pointer;}
+.match-card:not(.locked) .match-header:hover{background:rgba(0,0,0,.02);}
+.mh-meta{display:flex;flex-direction:column;gap:2px;min-width:52px;}
+.mh-time{font-size:13px;font-weight:600;color:var(--text);}
+.mh-group{font-size:10px;color:var(--muted);}
+.mh-teams{flex:1;display:flex;align-items:center;gap:6px;min-width:0;}
+.mh-team{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;min-width:0;}
+.mh-team img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.mh-team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mh-vs{font-size:11px;color:var(--muted);flex-shrink:0;}
+.mh-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.mh-votes{font-size:11px;color:var(--muted);}
+.mh-arrow{font-size:12px;color:var(--muted);transition:transform .2s;}
+.match-card.open .mh-arrow{transform:rotate(180deg);}
+.open-tag{font-size:10px;font-weight:600;color:var(--blue-d);background:var(--blue-l);padding:2px 7px;border-radius:10px;}
+.voted-tag{font-size:10px;font-weight:600;color:var(--green);background:var(--green-l);padding:2px 7px;border-radius:10px;}
+.match-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border);}
+.match-card.open .match-body{display:block;}
+/* HANDICAP */
+.handicap-bar{background:var(--orange-l);border-radius:8px;padding:8px 12px;margin:10px 0 6px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;color:var(--orange);}
+/* FORM */
+.field-label{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;}
+.input-row{display:flex;gap:8px;margin-bottom:10px;margin-top:10px;}
+.name-input{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;color:var(--text);}
+.name-input:focus{border-color:var(--blue);}
+.send-btn{padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;}
+.choice-row{display:flex;gap:6px;margin-bottom:6px;}
+.choice-btn{flex:1;padding:10px 4px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);text-align:center;line-height:1.5;}
+.choice-btn.sel-home{background:var(--blue-l);border-color:var(--blue);color:var(--blue-d);}
+.choice-btn.sel-away{background:var(--red-l);border-color:var(--red);color:var(--red-d);}
+.voted-display{background:var(--green-l);border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px;color:var(--green);text-align:center;font-weight:500;}
+.err{font-size:11px;color:#c0392b;min-height:14px;margin-bottom:4px;}
+.bars{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.bar-row{display:flex;align-items:center;gap:8px;}
+.bar-lbl{font-size:11px;width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+.bar-track{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;}
+.bf-home{background:var(--blue);}
+.bf-away{background:var(--red);}
+.bar-pct{font-size:11px;color:var(--muted);min-width:30px;text-align:right;}
+.voters-hdr{font-size:11px;color:var(--muted);margin:8px 0 4px;}
+.voter-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);}
+.voter-row:last-child{border-bottom:none;}
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
+.av-home{background:var(--blue-l);color:var(--blue-d);}
+.av-away{background:var(--red-l);color:var(--red-d);}
+.voter-name{font-size:12px;flex:1;}
+.voter-pick{font-size:11px;font-weight:500;}
+.pk-home{color:var(--blue-d);}
+.pk-away{color:var(--red-d);}
+.result-badge{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;}
+.result-correct{background:var(--green-l);color:var(--green);}
+.result-wrong{background:var(--red-l);color:var(--red-d);}
+.empty-note{font-size:12px;color:var(--muted);text-align:center;padding:8px 0;}
+.empty-day{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
+.sending-overlay{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;border-radius:var(--r);font-size:12px;color:var(--muted);}
+.flag-img{width:22px;height:22px;border-radius:50%;object-fit:cover;}
+.flag-img-lg{width:28px;height:28px;border-radius:50%;object-fit:cover;}
+.no-active-notice{background:#fff3cd;border:1px solid #fcd34d;border-radius:8px;padding:12px;font-size:13px;color:#856404;text-align:center;margin-bottom:12px;}
+/* SUMMARY */
+.sum-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;}
+.sum-header{display:flex;align-items:center;padding:12px 14px;cursor:pointer;gap:10px;user-select:none;}
+.sum-header:hover{background:rgba(0,0,0,.02);}
+.sum-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border);}
+.sum-section.open .sum-body{display:block;}
+.sum-section.open .mh-arrow{transform:rotate(180deg);}
+.sum-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 6px;}
+.stat-box{background:var(--bg);border-radius:8px;padding:10px;text-align:center;}
+.stat-box.winner{outline:2px solid var(--blue);background:var(--blue-l);}
+.stat-num{font-size:20px;font-weight:600;}
+.stat-num.winner-num{color:var(--blue-d);}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+.total-row{font-size:11px;color:var(--muted);text-align:right;}
+.result-banner{background:var(--green-l);border:1px solid var(--green);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-bottom:8px;text-align:center;font-weight:500;}
+/* LEADERBOARD */
+.lb-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.lb-header{padding:14px 16px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.lb-row:last-child{border-bottom:none;}
+.lb-rank{width:28px;text-align:center;font-size:16px;font-weight:700;flex-shrink:0;}
+.lb-rank.top1{color:#f59e0b;}
+.lb-rank.top2{color:#9ca3af;}
+.lb-rank.top3{color:#b45309;}
+.lb-rank.bottom{color:var(--red-d);}
+.lb-name{flex:1;font-size:14px;font-weight:500;}
+.lb-score{font-size:18px;font-weight:700;color:var(--blue-d);}
+.lb-detail{font-size:11px;color:var(--muted);}
+.lb-bottom-notice{background:var(--red-l);border:1px solid var(--red);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red-d);text-align:center;margin-bottom:12px;font-weight:500;}
+/* MANAGER */
+.manager-banner{background:#fef3c7;border-bottom:1px solid #fcd34d;padding:10px 16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px;}
+.manager-page{padding:14px;max-width:600px;margin:0 auto;}
+.manager-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.manager-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.match-radio-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;}
+.match-radio-row:hover{background:var(--bg);}
+.match-radio-row.selected{background:var(--blue-l);border-color:var(--blue);}
+.match-radio-row input[type=radio]{width:16px;height:16px;cursor:pointer;flex-shrink:0;}
+.mrl-info{flex:1;}
+.mrl-teams{font-size:13px;font-weight:500;}
+.mrl-meta{font-size:11px;color:var(--muted);}
+.mh-hc{font-size:11px;color:var(--orange,#e37400);font-weight:500;}
+.handicap-input-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;}
+.handicap-input-row label{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;}
+.handicap-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;}
+.handicap-input:focus{border-color:var(--blue);}
+.set-btn{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;}
+.set-btn:hover{opacity:.88;}
+.set-btn:disabled{opacity:.5;cursor:not-allowed;}
+.success-msg{font-size:13px;color:var(--green);background:var(--green-l);padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center;}
+/* Result input */
+.result-row{display:flex;gap:8px;margin-bottom:8px;}
+.result-match-info{flex:1;font-size:13px;}
+.result-select{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;}
+.save-result-btn{padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;}
+.cancel-active-btn{width:100%;padding:11px;background:#fff;color:var(--red-d);border:1.5px solid var(--red);border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;margin-top:6px;}
+.cancel-active-btn:hover{background:var(--red-l);}
+.current-result{font-size:11px;color:var(--green);margin-top:2px;}
+/* MEMBER LIST */
+.member-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.member-tag{display:flex;align-items:center;gap:4px;background:var(--blue-l);border:1px solid var(--blue);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:500;color:var(--blue-d);}
+.member-tag-del{background:none;border:none;color:var(--blue-d);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px;opacity:.6;}
+.member-tag-del:hover{opacity:1;}
+.member-add-row{display:flex;gap:8px;margin-top:4px;}
+.member-add-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;}
+.member-add-input:focus{border-color:var(--blue);}
+.member-add-btn{padding:7px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;}
+/* VOTE DROPDOWN */
+.name-select{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;color:var(--text);cursor:pointer;}
+.name-select:focus{border-color:var(--blue);}
+.name-select option:disabled{color:var(--muted);}
+.match-check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;}
+.match-check-row:hover{background:var(--bg);}
+.match-check-row.selected{background:var(--blue-l);border-color:var(--blue);}
+.match-check-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:2px;}
+.hc-inline{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.hc-inline label{font-size:11px;color:var(--muted);white-space:nowrap;}
+.hc-inline input{flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;min-width:0;}
+.hc-inline input:focus{border-color:var(--blue);}
+.lb-stats{font-size:11px;color:var(--muted);margin-top:2px;}
+.lb-bar-wrap{margin-top:4px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;width:80px;}
+.lb-bar-fill{height:100%;background:var(--blue);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">⚽</div>
+    <div class="login-title">WC Vote 2026</div>
+    <div class="login-sub">Nhập password để vào dự đoán</div>
+    <input id="pw-input" class="login-input" type="password" placeholder="••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Vào ngay</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="main-app" style="display:none">
+  <div class="site-header">
+    <div class="site-logo">⚽ WC <span>2026</span></div>
+    <div class="header-right">
+      <span id="role-badge" class="role-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+  <div id="manager-banner" class="manager-banner" style="display:none">⚙️ <strong>Manager mode</strong> — Chọn trận active để member vote</div>
+  <div class="tabs-bar">
+    <div class="tab-main active" onclick="switchTab('vote')">Dự đoán</div>
+    <div class="tab-main" onclick="switchTab('summary')">Bảng tổng hợp</div>
+    <div class="tab-main" onclick="switchTab('leaderboard')">🏆 Xếp hạng</div>
+    <div class="tab-main" id="tab-manager" style="display:none" onclick="switchTab('manager')">⚙️ Quản lý</div>
+  </div>
+  <div id="day-nav-vote" class="day-nav"></div>
+  <div id="page-vote" class="page active"></div>
+  <div id="page-summary" class="page">
+    <div id="day-nav-summary-wrap" style="display:none"><div id="day-nav-summary" class="day-nav"></div></div>
+    <div id="summary-container" style="padding:14px 0 60px;max-width:600px;margin:0 auto;"></div>
+  </div>
+  <div id="page-leaderboard" class="page">
+    <div id="leaderboard-container" style="padding-bottom:60px;"></div>
+  </div>
+  <div id="page-manager" class="page">
+    <div class="manager-page">
+      <div class="manager-section">
+        <div class="manager-title">📅 Chọn ngày</div>
+        <div id="manager-day-nav" class="day-nav" style="border:none;padding:0;margin-bottom:12px;"></div>
+        <div class="manager-title">⚽ Chọn trận active</div>
+        <div id="manager-match-list"></div>
+        <button class="set-btn" id="set-active-btn" onclick="setActiveMatch()" disabled>✅ Xác nhận các trận active</button>
+        <button class="cancel-active-btn" id="cancel-active-btn" onclick="cancelAllActive()" style="display:none">❌ Hủy tất cả active</button>
+        <button class="cancel-active-btn" onclick="resetVoteCache()" style="margin-top:4px;border-color:#999;color:#555">🗑️ Reset vote cache (xóa lịch sử vote trên máy này)</button>
+        <div id="set-success" style="display:none" class="success-msg"></div>
+      </div>
+      <div class="manager-section">
+        <div class="manager-title">👥 Danh sách member</div>
+        <div id="member-list-display" class="member-list"></div>
+        <div class="member-add-row">
+          <input class="member-add-input" id="member-add-input" type="text" placeholder="Thêm tên member..." onkeydown="if(event.key==='Enter')addMember()">
+          <button class="member-add-btn" onclick="addMember()">+ Thêm</button>
+        </div>
+        <div id="member-msg" style="font-size:12px;color:var(--green);margin-top:6px;min-height:16px;"></div>
+      </div>
+      <div class="manager-section">
+        <div class="manager-title">📊 Nhập kết quả trận đã đấu</div>
+        <div id="result-input-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var PW_MEMBER="wc2026", PW_MANAGER="admin2026";
+var API="https://script.google.com/macros/s/AKfycbyoE8Cxc5vdtpvUQDGHZm9zWCpYWN20LLtU3wbc7Hyz5urlpnsO3ExQznoEsvbcMUpKMw/exec";
+var role="", activeMatchIds=[], results={};
+var managerDay="", managerChecked={}, managerHandicaps={};
+var myVotes={};
+var members=["Hien","Quang","Duc","An","Vu","Tien","Thien"];
+
+function f(c){return '<img class="flag-img" src="https://flagcdn.com/w40/'+c+'.png" alt="">';}
+function flg(c){return '<img class="flag-img-lg" src="https://flagcdn.com/w40/'+c+'.png" alt="">';}
+
+var M=[
+  {id:"m41",date:"2026-06-23",time:"00:00",group:"Bảng J",handicap:"Argentina -0.5",home:{en:"Argentina",vi:"Argentina",f:"ar"},away:{en:"Austria",vi:"Áo",f:"at"}},
+  {id:"m42",date:"2026-06-23",time:"04:00",group:"Bảng I",handicap:"Pháp -2.0",home:{en:"France",vi:"Pháp",f:"fr"},away:{en:"Iraq",vi:"Iraq",f:"iq"}},
+  {id:"m43",date:"2026-06-23",time:"07:00",group:"Bảng I",handicap:"Na Uy -0.5",home:{en:"Norway",vi:"Na Uy",f:"no"},away:{en:"Senegal",vi:"Senegal",f:"sn"}},
+  {id:"m44",date:"2026-06-23",time:"10:00",group:"Bảng J",handicap:"Algeria -0.5",home:{en:"Jordan",vi:"Jordan",f:"jo"},away:{en:"Algeria",vi:"Algeria",f:"dz"}},
+  {id:"m45",date:"2026-06-24",time:"00:00",group:"Bảng K",handicap:"Portugal -1.5",home:{en:"Portugal",vi:"Bồ Đào Nha",f:"pt"},away:{en:"Uzbekistan",vi:"Uzbekistan",f:"uz"}},
+  {id:"m46",date:"2026-06-24",time:"03:00",group:"Bảng L",handicap:"Anh -1.0",home:{en:"England",vi:"Anh",f:"gb-eng"},away:{en:"Ghana",vi:"Ghana",f:"gh"}},
+  {id:"m47",date:"2026-06-24",time:"06:00",group:"Bảng L",handicap:"Croatia -0.5",home:{en:"Panama",vi:"Panama",f:"pa"},away:{en:"Croatia",vi:"Croatia",f:"hr"}},
+  {id:"m48",date:"2026-06-24",time:"09:00",group:"Bảng K",handicap:"Colombia -1.0",home:{en:"Colombia",vi:"Colombia",f:"co"},away:{en:"DR Congo",vi:"CHDC Congo",f:"cd"}},
+  {id:"m49",date:"2026-06-25",time:"02:00",group:"Bảng B",handicap:"Bosnia -0.5",home:{en:"Bosnia",vi:"Bosnia",f:"ba"},away:{en:"Qatar",vi:"Qatar",f:"qa"}},
+  {id:"m50",date:"2026-06-25",time:"02:00",group:"Bảng B",handicap:"Thụy Sĩ -0.5",home:{en:"Switzerland",vi:"Thụy Sĩ",f:"ch"},away:{en:"Canada",vi:"Canada",f:"ca"}},
+  {id:"m51",date:"2026-06-25",time:"05:00",group:"Bảng C",handicap:"Brazil -1.5",home:{en:"Morocco",vi:"Ma-rốc",f:"ma"},away:{en:"Haiti",vi:"Haiti",f:"ht"}},
+  {id:"m52",date:"2026-06-25",time:"05:00",group:"Bảng C",handicap:"Brazil -1.5",home:{en:"Scotland",vi:"Scotland",f:"gb-sct"},away:{en:"Brazil",vi:"Brazil",f:"br"}},
+  {id:"m53",date:"2026-06-25",time:"08:00",group:"Bảng A",handicap:"Hàn Quốc -0.5",home:{en:"South Africa",vi:"Nam Phi",f:"za"},away:{en:"South Korea",vi:"Hàn Quốc",f:"kr"}},
+  {id:"m54",date:"2026-06-25",time:"08:00",group:"Bảng A",handicap:"Séc -0.5",home:{en:"Czechia",vi:"CH Séc",f:"cz"},away:{en:"Mexico",vi:"Mexico",f:"mx"}},
+  {id:"m55",date:"2026-06-26",time:"03:00",group:"Bảng E",handicap:"Bờ Biển Ngà -0.5",home:{en:"Curacao",vi:"Curaçao",f:"cw"},away:{en:"Ivory Coast",vi:"Bờ Biển Ngà",f:"ci"}},
+  {id:"m56",date:"2026-06-26",time:"03:00",group:"Bảng E",handicap:"Đức -1.0",home:{en:"Ecuador",vi:"Ecuador",f:"ec"},away:{en:"Germany",vi:"Đức",f:"de"}},
+  {id:"m57",date:"2026-06-26",time:"06:00",group:"Bảng F",handicap:"Hà Lan -1.5",home:{en:"Tunisia",vi:"Tunisia",f:"tn"},away:{en:"Netherlands",vi:"Hà Lan",f:"nl"}},
+  {id:"m58",date:"2026-06-26",time:"06:00",group:"Bảng F",handicap:"Nhật Bản -0.5",home:{en:"Japan",vi:"Nhật Bản",f:"jp"},away:{en:"Sweden",vi:"Thụy Điển",f:"se"}},
+  {id:"m59",date:"2026-06-26",time:"09:00",group:"Bảng D",handicap:"Mỹ -0.5",home:{en:"Turkiye",vi:"Thổ Nhĩ Kỳ",f:"tr"},away:{en:"USA",vi:"Mỹ",f:"us"}},
+  {id:"m60",date:"2026-06-26",time:"09:00",group:"Bảng D",handicap:"Úc -0.5",home:{en:"Paraguay",vi:"Paraguay",f:"py"},away:{en:"Australia",vi:"Úc",f:"au"}},
+  {id:"m61",date:"2026-06-27",time:"02:00",group:"Bảng I",handicap:"Pháp -1.0",home:{en:"Norway",vi:"Na Uy",f:"no"},away:{en:"France",vi:"Pháp",f:"fr"}},
+  {id:"m62",date:"2026-06-27",time:"02:00",group:"Bảng I",handicap:"Senegal -0.5",home:{en:"Senegal",vi:"Senegal",f:"sn"},away:{en:"Iraq",vi:"Iraq",f:"iq"}},
+  {id:"m63",date:"2026-06-27",time:"07:00",group:"Bảng H",handicap:"Ả Rập Xê Út -0.5",home:{en:"Cabo Verde",vi:"Cabo Verde",f:"cv"},away:{en:"Saudi Arabia",vi:"Ả Rập Xê Út",f:"sa"}},
+  {id:"m64",date:"2026-06-27",time:"07:00",group:"Bảng H",handicap:"Tây Ban Nha -1.5",home:{en:"Uruguay",vi:"Uruguay",f:"uy"},away:{en:"Spain",vi:"Tây Ban Nha",f:"es"}},
+  {id:"m65",date:"2026-06-27",time:"10:00",group:"Bảng G",handicap:"Bỉ -1.0",home:{en:"New Zealand",vi:"New Zealand",f:"nz"},away:{en:"Belgium",vi:"Bỉ",f:"be"}},
+  {id:"m66",date:"2026-06-27",time:"10:00",group:"Bảng G",handicap:"Iran -0.5",home:{en:"Egypt",vi:"Ai Cập",f:"eg"},away:{en:"Iran",vi:"Iran",f:"ir"}},
+  {id:"m67",date:"2026-06-28",time:"04:00",group:"Bảng L",handicap:"Anh -1.0",home:{en:"Panama",vi:"Panama",f:"pa"},away:{en:"England",vi:"Anh",f:"gb-eng"}},
+  {id:"m68",date:"2026-06-28",time:"04:00",group:"Bảng L",handicap:"Croatia -0.5",home:{en:"Croatia",vi:"Croatia",f:"hr"},away:{en:"Ghana",vi:"Ghana",f:"gh"}},
+  {id:"m69",date:"2026-06-28",time:"06:30",group:"Bảng K",handicap:"Bồ Đào Nha -0.5",home:{en:"Colombia",vi:"Colombia",f:"co"},away:{en:"Portugal",vi:"Bồ Đào Nha",f:"pt"}},
+  {id:"m70",date:"2026-06-28",time:"06:30",group:"Bảng K",handicap:"Hòa 0",home:{en:"DR Congo",vi:"CHDC Congo",f:"cd"},away:{en:"Uzbekistan",vi:"Uzbekistan",f:"uz"}},
+  {id:"m71",date:"2026-06-28",time:"09:00",group:"Bảng J",handicap:"Algeria -0.5",home:{en:"Algeria",vi:"Algeria",f:"dz"},away:{en:"Austria",vi:"Áo",f:"at"}},
+  {id:"m72",date:"2026-06-28",time:"09:00",group:"Bảng J",handicap:"Argentina -1.5",home:{en:"Jordan",vi:"Jordan",f:"jo"},away:{en:"Argentina",vi:"Argentina",f:"ar"}},
+];
+
+var DAYS=(function(){var s={};M.forEach(function(m){s[m.date]=1;});return Object.keys(s).sort();})();
+var state={};
+M.forEach(function(m){state[m.id]={voters:[],pName:"",pChoice:null,err:"",sending:false,open:false,sumOpen:false};});
+var dvote=DAYS[0], dsum=DAYS[0];
+
+function todayVN(){var vn=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"}));return vn.toISOString().slice(0,10);}
+function fmtDay(d){var p=d.split("-");return parseInt(p[2])+"/"+parseInt(p[1]);}
+function fmtDayFull(d){return ["CN","T2","T3","T4","T5","T6","T7"][new Date(d+"T12:00:00").getDay()]+" "+fmtDay(d);}
+function ini(n){return n.trim().split(/\s+/).map(function(w){return w[0];}).join("").toUpperCase().slice(0,2);}
+function pct(arr,k){return arr.length?Math.round(arr.filter(function(v){return v.c===k;}).length/arr.length*100):0;}
+
+function doLogin(){
+  var v=document.getElementById("pw-input").value.trim();
+  if(v===PW_MANAGER){role="manager";localStorage.setItem("wc_auth","manager");showApp();}
+  else if(v===PW_MEMBER){role="member";localStorage.setItem("wc_auth","member");showApp();}
+  else{document.getElementById("login-err").textContent="Password không đúng!";document.getElementById("pw-input").value="";}
+}
+function doLogout(){localStorage.removeItem("wc_auth");location.reload();}
+
+function showApp(){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("main-app").style.display="block";
+  var badge=document.getElementById("role-badge");
+  if(role==="manager"){
+    badge.textContent="⚙️ Manager";badge.className="role-badge role-manager";
+    document.getElementById("manager-banner").style.display="flex";
+    document.getElementById("tab-manager").style.display="block";
+  } else {
+    badge.textContent="👤 Member";badge.className="role-badge role-member";
+    setInterval(pollActive,15000);
+  }
+  appInit();
+}
+
+function initNavs(){
+  var today=todayVN();
+  ["vote","summary"].forEach(function(tab){
+    var el=document.getElementById("day-nav-"+tab);
+    var cur=tab==="vote"?dvote:dsum;
+    el.innerHTML=DAYS.map(function(d){
+      var isSel=d===cur,isToday=d===today&&!isSel;
+      return '<button class="day-btn'+(isSel?" active":isToday?" today":"")+'" onclick="selDay(\''+tab+'\',\''+d+'\')">'+fmtDayFull(d)+"</button>";
+    }).join("");
+  });
+  var mel=document.getElementById("manager-day-nav");
+  if(mel){
+    if(!managerDay)managerDay=todayVN();
+    if(DAYS.indexOf(managerDay)<0)managerDay=DAYS[0];
+    mel.innerHTML=DAYS.map(function(d){
+      return '<button class="day-btn'+(d===managerDay?" active":"")+'" onclick="selManagerDay(\''+d+'\')">'+fmtDayFull(d)+"</button>";
+    }).join("");
+  }
+}
+
+function selDay(tab,d){
+  if(tab==="vote"){dvote=d;M.forEach(function(m){state[m.id].open=false;});}
+  else{dsum=d;M.forEach(function(m){state[m.id].sumOpen=false;});}
+  initNavs();
+  if(tab==="vote")renderVote(); else renderSum();
+}
+function selManagerDay(d){managerDay=d;managerChecked={};managerHandicaps={};document.getElementById("set-active-btn").disabled=true;initNavs();renderManagerMatches();renderResultInputs();}
+
+function switchTab(t){
+  document.querySelectorAll(".tab-main").forEach(function(el){el.classList.remove("active");});
+  event.target.classList.add("active");
+  ["vote","summary","leaderboard","manager"].forEach(function(name){
+    var el=document.getElementById("page-"+name);
+    if(el)el.classList.toggle("active",name===t);
+  });
+  document.getElementById("day-nav-vote").style.display=t==="vote"?"flex":"none";
+  document.getElementById("day-nav-summary-wrap").style.display=t==="summary"?"block":"none";
+  if(t==="summary")loadSum();
+  if(t==="leaderboard")loadLeaderboard();
+  if(t==="manager"){fetch(API).then(function(r){return r.json();}).then(function(d){mergeAll(d);}).catch(function(){}).finally(function(){renderManagerMatches();renderResultInputs();renderMemberList();});}
+}
+
+function toggleCard(id){
+  var isActive=activeMatchIds.indexOf(id)>=0;
+  if(role==="member"&&!isActive)return;
+  state[id].open=!state[id].open;
+  renderVote();
+}
+function toggleSum(id){state[id].sumOpen=!state[id].sumOpen;renderSum();}
+
+function myVoteFor(id){return myVotes[id]||null;}
+
+function resetVoteCache(){
+  if(!confirm("Xóa toàn bộ lịch sử vote trên máy này?\n(Chỉ xóa cache local, không ảnh hưởng dữ liệu Sheets)"))return;
+  myVotes={};
+  localStorage.removeItem("wc_my_votes");
+  renderVote();
+  var suc=document.getElementById("set-success");
+  if(suc){suc.textContent="✅ Đã reset vote cache!";suc.style.display="block";setTimeout(function(){suc.style.display="none";},3000);}
+}
+
+function syncMyVotes(){
+  // Xóa vote local nếu không còn trong Sheets
+  var changed=false;
+  Object.keys(myVotes).forEach(function(id){
+    var v=myVotes[id];
+    var inSheets=state[id]&&state[id].voters.some(function(vt){
+      return vt.name.toLowerCase()===v.name.toLowerCase();
+    });
+    if(!inSheets){delete myVotes[id];changed=true;}
+  });
+  if(changed)localStorage.setItem("wc_my_votes",JSON.stringify(myVotes));
+}
+
+function submit(id){
+  var s=state[id];
+  if(myVoteFor(id)){return;}
+  if(!s.pName.trim()){s.err="Vui lòng nhập tên.";renderVote();return;}
+  if(!s.pChoice){s.err="Vui lòng chọn kết quả.";renderVote();return;}
+  s.sending=true;s.err="";renderVote();
+  var name=s.pName.trim(),choice=s.pChoice;
+  fetch(API,{method:"POST",body:JSON.stringify({match_id:id,name:name,choice:choice})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="voted"){
+      myVotes[id]={name:name,choice:choice};
+      localStorage.setItem("wc_my_votes",JSON.stringify(myVotes));
+    } else if(d.status==="already_voted"){
+      s.err="Bạn đã vote trận này rồi!";
+    }
+    return fetch(API);
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){if(d&&d.votes)mergeAll(d);})
+  .catch(function(){state[id].err="Lỗi kết nối.";})
+  .finally(function(){state[id].pName="";state[id].pChoice=null;state[id].sending=false;renderVote();});
+}
+
+function mergeAll(d){
+  if(d.votes)M.forEach(function(m){
+    state[m.id].voters=d.votes.filter(function(v){return v.match_id===m.id;}).map(function(v){return {name:v.name,c:v.choice};});
+  });
+  if(d.active_matches!==undefined){
+    activeMatchIds=Array.isArray(d.active_matches)?d.active_matches:(d.active_matches?[d.active_matches]:[]);
+  } else if(d.active_match!==undefined){
+    activeMatchIds=d.active_match?[d.active_match]:[];
+  }
+  if(d.active_handicaps&&typeof d.active_handicaps==="object"){
+    M.forEach(function(m){if(d.active_handicaps[m.id]!==undefined)m._handicap=d.active_handicaps[m.id];});
+  } else if(d.active_handicap!==undefined){
+    var aid=activeMatchIds[0];
+    if(aid){var am=M.find(function(x){return x.id===aid;});if(am)am._handicap=d.active_handicap;}
+  }
+  if(d.results)results=d.results;
+  if(d.members&&d.members.length>0)members=d.members;
+}
+
+function onSelectName(id,val){state[id].pName=val;state[id].err="";renderVote();}
+function setChoice(id,c){state[id].pChoice=c;state[id].err="";renderVote();}
+
+function choiceLabel(m,c){return c==="home"?m.home.vi+" thắng":c==="away"?m.away.vi+" thắng":"Hòa kèo";}
+
+function isCorrect(matchId,choice){
+  var r=results[matchId];
+  if(!r)return null;
+  if(r==="draw")return "draw";
+  return choice===r?"correct":"wrong";
+}
+
+function renderVote(){
+  var ms=M.filter(function(m){return m.date===dvote;});
+  if(!ms.length){document.getElementById("page-vote").innerHTML='<div class="empty-day">Không có trận đấu ngày này</div>';return;}
+  var hasActive=ms.some(function(m){return activeMatchIds.indexOf(m.id)>=0;});
+  var topHtml=role==="member"&&!hasActive?'<div class="no-active-notice">⏳ Chưa có trận nào được mở hôm nay.<br>Chờ manager chọn trận nhé!</div>':"";
+  document.getElementById("page-vote").innerHTML=topHtml+ms.map(function(m){
+    var s=state[m.id],v=s.voters,total=v.length;
+    var isActive=activeMatchIds.indexOf(m.id)>=0;
+    var isLocked=role==="member"&&!isActive;
+    var myVote=myVoteFor(m.id);
+    var isVoted=!!myVote;
+    var isOpen=s.open&&(role==="manager"||isActive);
+    var ph=pct(v,"home"),pa=pct(v,"away");
+    var handicap=(m._handicap!==undefined)?m._handicap:m.handicap;
+
+    var cls="match-card"+(isLocked?" locked":"")+(isActive?" active-match":"")+(isVoted&&!isLocked?" voted-card":"")+(isOpen?" open":"");
+    var html='<div class="'+cls+'">';
+    if(s.sending)html+='<div class="sending-overlay">Đang lưu...</div>';
+    html+='<div class="match-header"'+(isLocked?"":' onclick="toggleCard(\''+m.id+'\')"')+'>';
+    html+='<div class="mh-meta"><div class="mh-time">'+m.time+'</div><div class="mh-group">'+m.group+'</div></div>';
+    html+='<div class="mh-teams"><div class="mh-team">'+f(m.home.f)+'<span>'+(m.home.en!==m.home.vi?m.home.vi:m.home.en)+'</span></div><div class="mh-vs">vs</div><div class="mh-team">'+f(m.away.f)+'<span>'+(m.away.en!==m.away.vi?m.away.vi:m.away.en)+'</span></div></div>';
+    html+='<div class="mh-right">';
+    if(isActive&&!isVoted)html+='<span class="open-tag">🟢 OPEN</span>';
+    if(isVoted)html+='<span class="voted-tag">✓ Đã vote</span>';
+    if(isLocked)html+='<span style="font-size:14px">🔒</span>';
+    else html+=(total>0?'<div class="mh-votes">'+total+'</div>':'')+'<div class="mh-arrow">▼</div>';
+    html+='</div></div>';
+
+    if(!isLocked){
+      html+='<div class="match-body">';
+      if(handicap)html+='<div class="handicap-bar">🎯 Kèo chấp: <strong>'+handicap+'</strong></div>';
+      if(isVoted){
+        var correct=isCorrect(m.id,myVote.choice);
+        html+='<div class="voted-display">✓ Bạn đã chọn: <strong>'+choiceLabel(m,myVote.choice)+'</strong>';
+        if(correct==="correct")html+=' <span class="result-badge result-correct">+1 điểm ✓</span>';
+        else if(correct==="wrong")html+=' <span class="result-badge result-wrong">Sai ✗</span>';
+        else if(correct==="draw")html+=' <span class="result-badge" style="background:#fff3cd;color:#856404">Hòa kèo ±0</span>';
+        html+='</div>';
+      } else {
+        html+='<div class="field-label" style="margin-top:2px">Chọn tên của bạn</div>';
+        html+='<div class="input-row">';
+        if(members.length===0){
+          html+='<input class="name-input" type="text" placeholder="Nhập tên..." value="'+s.pName+'" oninput="onSelectName(&apos;'+m.id+'&apos;,this.value)">';
+        } else {
+          var votedNames=state[m.id].voters.map(function(v){return v.name.toLowerCase();});
+          html+='<select class="name-select" onchange="onSelectName(&apos;'+m.id+'&apos;,this.value)">';
+          html+='<option value="">-- Chọn tên --</option>';
+          members.forEach(function(mn){
+            var alreadyVoted=votedNames.indexOf(mn.toLowerCase())>=0;
+            html+='<option value="'+mn+'"'+( s.pName===mn?' selected':'')+( alreadyVoted?' disabled':'')+'>'+mn+(alreadyVoted?' ⛔ đã vote':'')+'</option>';
+          });
+          html+='</select>';
+        }
+        html+='<button class="send-btn" onclick="submit(&apos;'+m.id+'&apos;)">Gửi ↗</button></div>';
+        html+='<div class="field-label" style="margin-bottom:5px">Dự đoán</div>';
+        html+='<div class="choice-row"><button class="choice-btn'+(s.pChoice==="home"?" sel-home":"")+'" onclick="setChoice(&apos;'+m.id+'&apos;,&apos;home&apos;)">'+flg(m.home.f)+"<br>"+m.home.vi+' thắng</button>';
+        html+='<button class="choice-btn'+(s.pChoice==="away"?" sel-away":"")+'" onclick="setChoice(&apos;'+m.id+'&apos;,&apos;away&apos;)">'+flg(m.away.f)+"<br>"+m.away.vi+' thắng</button></div>';
+        html+='<div class="err" id="e_'+m.id+'">'+s.err+"</div>";
+      }
+      if(total>0&&role==="manager"){
+        var res=results[m.id];
+        html+='<div class="bars"><div class="bar-row"><div class="bar-lbl" style="color:var(--blue-d)">'+m.home.vi+'</div><div class="bar-track"><div class="bar-fill bf-home" style="width:'+ph+'%"></div></div><div class="bar-pct">'+ph+'%</div></div>';
+        html+='<div class="bar-row"><div class="bar-lbl" style="color:var(--red-d)">'+m.away.vi+'</div><div class="bar-track"><div class="bar-fill bf-away" style="width:'+pa+'%"></div></div><div class="bar-pct">'+pa+'%</div></div></div>';
+        html+='<div class="voters-hdr">'+total+' người đã dự đoán</div>';
+        html+=v.map(function(vt){
+          var cor=isCorrect(m.id,vt.c);
+          return '<div class="voter-row"><div class="avatar '+(vt.c==="home"?"av-home":"av-away")+'">'+ini(vt.name)+'</div><div class="voter-name">'+vt.name+'</div><div class="voter-pick '+(vt.c==="home"?"pk-home":"pk-away")+'">'+choiceLabel(m,vt.c)+(cor==="correct"?'<span class="result-badge result-correct">✓</span>':cor==="wrong"?'<span class="result-badge result-wrong">✗</span>':cor==="draw"?'<span class="result-badge" style="background:#fff3cd;color:#856404">±0</span>':'')+"</div></div>";
+        }).join("");
+      } else if(!isVoted&&total===0){
+        html+='<div class="empty-note">Chưa có ai dự đoán · hãy là người đầu tiên!</div>';
+      }
+      html+="</div>";
+    }
+    html+="</div>";
+    return html;
+  }).join("");
+}
+
+function renderSum(){
+  var ms=M.filter(function(m){return m.date===dsum;});
+  if(!ms.length){document.getElementById("summary-container").innerHTML='<div class="empty-day">Không có trận nào</div>';return;}
+  var ppl=new Set();M.forEach(function(m){state[m.id].voters.forEach(function(v){ppl.add(v.name.toLowerCase());});});
+  var html='<div style="font-size:13px;color:var(--muted);margin-bottom:12px;padding:0 14px">Tổng số người: <strong style="color:var(--text)">'+ppl.size+"</strong></div>";
+  html+=ms.map(function(m){
+    var v=state[m.id].voters,total=v.length;
+    var ph=pct(v,"home"),pa=pct(v,"away");
+    var win=total?(ph>=pa?"home":"away"):null;
+    var res=results[m.id];
+    var isOpen=state[m.id].sumOpen;
+    var s='<div class="sum-section'+(isOpen?" open":"")+'">';
+    s+='<div class="sum-header" onclick="toggleSum(\''+m.id+'\')">';
+    s+='<div class="mh-meta"><div class="mh-time">'+m.time+'</div><div class="mh-group">'+m.group+'</div>'+(m._handicap||m.handicap?'<div class="mh-hc">Kèo: '+(m._handicap||m.handicap)+'</div>':'')+'</div>';
+    s+='<div class="sum-title">'+f(m.home.f)+" "+m.home.vi+" vs "+m.away.vi+" "+f(m.away.f)+"</div>";
+    s+=(total>0?'<div class="mh-votes">'+total+' phiếu</div>':'');
+    if(res)s+='<span class="result-badge result-correct" style="font-size:11px">KQ: '+res+'</span>';
+    s+='<div class="mh-arrow">▼</div></div>';
+    s+='<div class="sum-body">';
+    if(res)s+='<div class="result-banner">'+(res==="draw"?"🤝":"✅")+' Kết quả: <strong>'+choiceLabel(m,res)+'</strong></div>';
+    if(role==="manager"||res){
+      var hBox='<div class="stat-box'+(win==="home"?" winner":"")+'"><div class="stat-num'+(win==="home"?" winner-num":"")+'">'+ph+'%</div><div class="stat-lbl">'+f(m.home.f)+" "+m.home.vi+"</div></div>";
+      var aBox='<div class="stat-box'+(win==="away"?" winner":"")+'"><div class="stat-num'+(win==="away"?" winner-num":"")+'">'+pa+'%</div><div class="stat-lbl">'+f(m.away.f)+" "+m.away.vi+"</div></div>";
+      s+='<div class="stat-grid">'+hBox+aBox+"</div>";
+      s+='<div class="total-row">'+total+" phiếu</div>";
+    } else {
+      s+='<div class="total-row" style="text-align:center;padding:12px 0">👥 <strong>'+total+'</strong> người đã vote · 🔒 Kết quả tiết lộ sau trận</div>';
+    }
+    if(total>0){
+      if(role==="manager"||res){
+        s+='<hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div class="voters-hdr">Chi tiết</div>';
+        s+=v.map(function(vt){
+          var cor=isCorrect(m.id,vt.c);
+          return '<div class="voter-row"><div class="avatar '+(vt.c==="home"?"av-home":"av-away")+'">'+ini(vt.name)+'</div><div class="voter-name">'+vt.name+'</div><div class="voter-pick '+(vt.c==="home"?"pk-home":"pk-away")+'">'+choiceLabel(m,vt.c)+(cor==="correct"?'<span class="result-badge result-correct">+1 ✓</span>':cor==="wrong"?'<span class="result-badge result-wrong">✗</span>':cor==="draw"?'<span class="result-badge" style="background:#fff3cd;color:#856404">Hòa ±0</span>':'')+"</div></div>";
+        }).join("");
+      } else {
+        s+='<hr style="border:none;border-top:1px solid var(--border);margin:8px 0">';
+        s+='<div class="empty-note" style="color:var(--muted);font-style:italic">🔒 Kết quả sẽ được tiết lộ sau khi trận kết thúc</div>';
+      }
+    } else s+='<div class="empty-note">Chưa có ai dự đoán</div>';
+    return s+"</div></div>";
+  }).join("");
+  document.getElementById("summary-container").innerHTML=html;
+}
+
+function renderLeaderboard(){
+  var scores={}, won={}, voted={};
+  var totalMatchesWithResult=Object.keys(results).length;
+  // Count all voted matches per person (even without result yet)
+  M.forEach(function(m){
+    state[m.id].voters.forEach(function(v){
+      var n=v.name;
+      if(!voted[n])voted[n]=0;
+      voted[n]++;
+      if(!scores[n])scores[n]=0;
+      if(!won[n])won[n]=0;
+      var res=results[m.id];
+      if(res&&res!=="draw"){if(v.c===res){won[n]++;scores[n]++;}}
+    });
+  });
+  // Include all members in leaderboard even if 0 votes
+  members.forEach(function(mn){
+    if(!voted[mn])voted[mn]=0;
+    if(!scores[mn])scores[mn]=0;
+    if(!won[mn])won[mn]=0;
+  });
+  var players=Object.keys(voted).filter(function(n){return voted[n]>0||members.indexOf(n)>=0;});
+  players.sort(function(a,b){return scores[b]-scores[a]||won[b]-won[a]||voted[b]-voted[a];});
+  var html="";
+  if(!players.length){
+    html='<div class="empty-day">Chưa có ai vote.<br>Manager mở trận để mọi người dự đoán!</div>';
+    document.getElementById("leaderboard-container").innerHTML=html;
+    return;
+  }
+  // Bottom 4 players (by score, only among those who voted)
+  var active=players.filter(function(n){return voted[n]>0;});
+  if(active.length>=5){
+    var bottom=active.slice(-4).join(", ");
+    html+='<div class="lb-bottom-notice" style="margin:14px 14px 0">🍺 Mời nhậu: <strong>'+bottom+'</strong></div>';
+  }
+  var rankIcons=["🥇","🥈","🥉"];
+  html+='<div class="lb-card" style="margin:12px 14px 0">';
+  html+='<div class="lb-header">🏆 Bảng xếp hạng <span style="font-size:12px;color:var(--muted);font-weight:400">('+totalMatchesWithResult+' trận có KQ)</span></div>';
+  players.forEach(function(name,i){
+    var rank=i+1;
+    var hasVoted=voted[name]>0;
+    var rankCls=!hasVoted?"":rank===1?"top1":rank===2?"top2":rank===3?"top3":rank>active.length-4?"bottom":"";
+    var icon=!hasVoted?"—":rankIcons[i]||(rank>active.length-4?"💀":rank);
+    var winPct=voted[name]>0&&totalMatchesWithResult>0?Math.round(won[name]/Math.min(voted[name],totalMatchesWithResult)*100):0;
+    html+='<div class="lb-row">';
+    html+='<div class="lb-rank '+rankCls+'">'+icon+'</div>';
+    html+='<div style="flex:1">';
+    html+='<div class="lb-name">'+name+'</div>';
+    if(hasVoted){
+      html+='<div class="lb-stats">Đã vote: '+voted[name]+' trận · Thắng: '+won[name]+'/'+Math.min(voted[name],totalMatchesWithResult)+' ('+winPct+'%)</div>';
+      if(totalMatchesWithResult>0){html+='<div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:'+winPct+'%"></div></div>';}
+    } else {
+      html+='<div class="lb-stats" style="color:var(--muted);font-style:italic">Chưa vote trận nào</div>';
+    }
+    html+='</div>';
+    html+='<div class="lb-score">'+scores[name]+'<span style="font-size:11px;color:var(--muted);font-weight:400"> đ</span></div>';
+    html+="</div>";
+  });
+  html+="</div>";
+  document.getElementById("leaderboard-container").innerHTML=html;
+}
+
+function cancelAllActive(){
+  if(!activeMatchIds.length)return;
+  var btn=document.getElementById("cancel-active-btn");
+  btn.disabled=true;btn.textContent="Đang hủy...";
+  fetch(API,{method:"POST",body:JSON.stringify({action:"set_active_multi",match_ids:[],handicaps:{}})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){
+      activeMatchIds=[];
+      M.forEach(function(m){m._handicap=undefined;});
+      managerChecked={};managerHandicaps={};
+      document.getElementById("set-active-btn").disabled=true;
+      var suc=document.getElementById("set-success");
+      suc.textContent="✅ Đã hủy tất cả active.";
+      suc.style.display="block";
+      setTimeout(function(){suc.style.display="none";},4000);
+      initNavs();renderVote();renderManagerMatches();
+    }
+  })
+  .catch(function(){})
+  .finally(function(){btn.disabled=false;btn.textContent="❌ Hủy tất cả active";});
+}
+
+// MANAGER
+function toggleManagerCheck(id){
+  managerChecked[id]=!managerChecked[id];
+  if(managerChecked[id]){
+    var m=M.find(function(x){return x.id===id;});
+    if(!managerHandicaps[id])managerHandicaps[id]=m?m.handicap:"";
+  }
+  var anyChecked=Object.keys(managerChecked).some(function(k){return managerChecked[k];});
+  document.getElementById("set-active-btn").disabled=!anyChecked;
+  renderManagerMatches();
+}
+
+function setActiveMatch(){
+  var anyChecked=Object.keys(managerChecked).some(function(k){return managerChecked[k];});
+  if(!anyChecked)return;
+  var btn=document.getElementById("set-active-btn");
+  btn.disabled=true;btn.textContent="Đang lưu...";
+  var ids=[],hcs={};
+  Object.keys(managerChecked).forEach(function(id){
+    if(managerChecked[id]){
+      ids.push(id);
+      var hcEl=document.getElementById("hc_"+id);
+      hcs[id]=hcEl?hcEl.value.trim():(managerHandicaps[id]||"");
+    }
+  });
+  fetch(API,{method:"POST",body:JSON.stringify({action:"set_active_multi",match_ids:ids,handicaps:hcs})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){
+      activeMatchIds=ids;
+      ids.forEach(function(id){
+        var m=M.find(function(x){return x.id===id;});
+        if(m)m._handicap=hcs[id];
+      });
+      var names=ids.map(function(id){var m=M.find(function(x){return x.id===id;});return m?m.home.vi+" vs "+m.away.vi:id;});
+      var suc=document.getElementById("set-success");
+      suc.textContent="✅ Active: "+names.join(" | ");
+      suc.style.display="block";
+      setTimeout(function(){suc.style.display="none";},5000);
+      if(ids.length>0){var am=M.find(function(x){return x.id===ids[0];});if(am)dvote=am.date;}
+      initNavs();renderVote();renderManagerMatches();
+    }
+  })
+  .catch(function(){})
+  .finally(function(){btn.disabled=false;btn.textContent="✅ Xác nhận các trận active";});
+}
+
+function renderManagerMatches(){
+  var ms=M.filter(function(m){return m.date===managerDay;});
+  var container=document.getElementById("manager-match-list");
+  var cancelBtn=document.getElementById("cancel-active-btn");
+  if(cancelBtn)cancelBtn.style.display=activeMatchIds.length?"block":"none";
+  if(!ms.length){container.innerHTML='<div class="empty-note">Không có trận</div>';return;}
+  container.innerHTML="";
+  ms.forEach(function(m){
+    var isChecked=!!managerChecked[m.id];
+    var isCur=activeMatchIds.indexOf(m.id)>=0;
+    var hcVal=managerHandicaps[m.id]!==undefined?managerHandicaps[m.id]:(isCur&&m._handicap!==undefined?m._handicap:m.handicap);
+    var row=document.createElement("div");
+    row.className="match-check-row"+(isChecked?" selected":"");
+    row.innerHTML='<input type="checkbox" id="chk_'+m.id+'" '+(isChecked?"checked":"")
+      +' onclick="event.stopPropagation();toggleManagerCheck(\''+m.id+'\')">'
+      +'<div class="mrl-info">'
+      +'<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
+      +'<div><div class="mrl-teams">'+f(m.home.f)+" "+m.home.vi+" vs "+m.away.vi+" "+f(m.away.f)+'</div>'
+      +'<div class="mrl-meta">'+m.time+" · "+m.group+'</div></div>'
+      +(isCur?'<span style="font-size:10px;font-weight:600;color:var(--green);background:var(--green-l);padding:2px 7px;border-radius:10px;white-space:nowrap">✅ ACTIVE</span>':"")
+      +'<div class="mrl-votes" style="white-space:nowrap">'+state[m.id].voters.length+' phiếu</div>'
+      +'</div>'
+      +(isChecked?'<div class="hc-inline"><label>Kèo chấp:</label><input id="hc_'+m.id+'" type="text" value="'+hcVal+'" placeholder="VD: Na Uy -0.5" onclick="event.stopPropagation()"></div>':"")
+      +'</div>';
+    row.onclick=function(){toggleManagerCheck(m.id);};
+    container.appendChild(row);
+  });
+}
+
+function renderResultInputs(){
+  var played=M.filter(function(m){return m.date<todayVN()||m.date===managerDay;}).slice(-10);
+  var container=document.getElementById("result-input-list");
+  container.innerHTML=played.map(function(m){
+    var cur=results[m.id]||"";
+    return '<div class="result-row">'
+      +'<div class="result-match-info"><strong>'+m.home.vi+" vs "+m.away.vi+'</strong><div class="mrl-meta">'+m.time+" · "+m.date+'</div>'
+      +(cur?'<div class="current-result">KQ hiện tại: '+choiceLabel(m,cur)+'</div>':'')
+      +"</div>"
+      +'<select class="result-select" id="res_'+m.id+'">'
+        +'<option value="">-- Chọn --</option>'
+        +'<option value="home"'+(cur==="home"?" selected":"")+'>'+m.home.vi+' thắng</option>'
+        +'<option value="away"'+(cur==="away"?" selected":"")+'>'+m.away.vi+' thắng</option>'
+        +'<option value="draw"'+(cur==="draw"?" selected":"")+'>Hòa kèo (0 điểm)</option>'
+      +"</select>"
+      +'<button class="save-result-btn" onclick="saveResult(\''+m.id+'\')">Lưu</button>'
+      +"</div>";
+  }).join("");
+}
+
+function saveResult(id){
+  var sel=document.getElementById("res_"+id);
+  if(!sel||!sel.value)return;
+  fetch(API,{method:"POST",body:JSON.stringify({action:"set_result",match_id:id,result:sel.value})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){results[id]=sel.value;renderResultInputs();loadLeaderboard();}
+  })
+  .catch(function(){});
+}
+
+function pollActive(){
+  fetch(API).then(function(r){return r.json();}).then(function(d){
+    var prevIds=activeMatchIds.slice();
+    mergeAll(d);syncMyVotes();
+    var changed=activeMatchIds.length!==prevIds.length||activeMatchIds.some(function(id){return prevIds.indexOf(id)<0;});
+    if(changed&&activeMatchIds.length>0){
+      var am=M.find(function(x){return x.id===activeMatchIds[0];});
+      if(am&&am.date!==dvote){dvote=am.date;initNavs();}
+    }
+    renderVote();
+  }).catch(function(){});
+}
+
+function loadSum(){
+  fetch(API).then(function(r){return r.json();}).then(function(d){mergeAll(d);syncMyVotes();}).catch(function(){}).finally(function(){renderSum();});
+}
+
+function loadLeaderboard(){
+  document.getElementById("leaderboard-container").innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">⏳ Đang tải dữ liệu...</div>';
+  fetch(API).then(function(r){return r.json();}).then(function(d){mergeAll(d);}).catch(function(){}).finally(function(){renderLeaderboard();});
+}
+
+// MEMBER MANAGEMENT
+function renderMemberList(){
+  var el=document.getElementById("member-list-display");
+  if(!el)return;
+  if(!members.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">Chưa có member nào</span>';return;}
+  el.innerHTML=members.map(function(m){
+    return '<div class="member-tag">'+m+'<button class="member-tag-del" onclick="deleteMember(\'"+m+"\')">×</button></div>';
+  }).join("");
+}
+
+function addMember(){
+  var inp=document.getElementById("member-add-input");
+  var name=inp.value.trim();
+  if(!name)return;
+  if(members.map(function(m){return m.toLowerCase();}).indexOf(name.toLowerCase())>=0){
+    showMemberMsg("⚠️ Tên này đã có trong danh sách!","#e37400");return;
+  }
+  inp.disabled=true;
+  fetch(API,{method:"POST",body:JSON.stringify({action:"add_member",name:name})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){members=d.members;inp.value="";renderMemberList();showMemberMsg("✅ Đã thêm: "+name);}
+    else showMemberMsg("❌ Lỗi: "+(d.msg||"unknown"),"#c0392b");
+  })
+  .catch(function(){showMemberMsg("❌ Lỗi kết nối","#c0392b");})
+  .finally(function(){inp.disabled=false;});
+}
+
+function deleteMember(name){
+  if(!confirm("Xóa member \""+name+"\" khỏi danh sách?"))return;
+  fetch(API,{method:"POST",body:JSON.stringify({action:"delete_member",name:name})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){members=d.members;renderMemberList();showMemberMsg("🗑️ Đã xóa: "+name);}
+  })
+  .catch(function(){});
+}
+
+function showMemberMsg(msg,color){
+  var el=document.getElementById("member-msg");
+  if(!el)return;
+  el.textContent=msg;el.style.color=color||"var(--green)";
+  setTimeout(function(){el.textContent="";},3000);
+}
+
+function appInit(){
+  var today=todayVN();
+  dvote=DAYS.indexOf(today)>=0?today:DAYS[0];
+  dsum=dvote;managerDay=dvote;
+  // Load saved votes from localStorage
+  try{myVotes=JSON.parse(localStorage.getItem("wc_my_votes")||"{}");}catch(e){myVotes={};}
+  initNavs();
+  document.getElementById("day-nav-summary-wrap").style.display="none";
+  fetch(API).then(function(r){return r.json();}).then(function(d){
+    mergeAll(d);
+    if(activeMatchIds.length>0){
+      var am=M.find(function(x){return x.id===activeMatchIds[0];});
+      if(am){dvote=am.date;initNavs();}
+    }
+  }).catch(function(){}).finally(function(){renderVote();if(role==="manager")renderMemberList();});
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  document.getElementById("pw-input").value="";
+  var saved=localStorage.getItem("wc_auth");
+  if(saved==="manager"){role="manager";showApp();}
+  else if(saved==="member"){role="member";showApp();}
+});
+</script>
+</body>
+</html>
